@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实时工资计算器</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #000;
+      color: #fff;
+      overflow: hidden;
+    }
+    .container {
+      position: relative;
+      z-index: 2;
+      max-width: 400px;
+      margin: 60px auto;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 0 30px gold;
+    }
+    .container h1 {
+      color: gold;
+      margin-bottom: 30px;
+    }
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      color: gold;
+      text-align: left;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: gold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      color: #000;
+    }
+    .result {
+      font-size: 36px;
+      margin-top: 30px;
+      color: gold;
+    }
+    .info {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #ccc;
+    }
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      background-color: gold;
+      opacity: 0.6;
+      animation: float 10s infinite ease-in-out;
+    }
+    @keyframes float {
+      0% { transform: translateY(0); opacity: 0.4; }
+      50% { transform: translateY(-800px); opacity: 0.8; }
+      100% { transform: translateY(0); opacity: 0.4; }
+    }
+    .progress-bar {
+      width: 100%;
+      height: 15px;
+      background-color: #444;
+      border-radius: 10px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+    .progress {
+      height: 100%;
+      background-color: gold;
+      width: 0;
+      transition: width 0.5s;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>实时工资计算器</h1>
+    <label for="rate">时薪（元/小时）</label>
+    <input id="rate" type="number" value="100" />
+    
+    <label for="hours">工作时长（小时）</label>
+    <input id="hours" type="number" value="8" />
+    
+    <label for="target">目标金额（元）</label>
+    <input id="target" type="number" value="800" />
+    
+    <button id="toggle">开始计时</button>
+    
+    <div class="result" id="earnings">¥0.00</div>
+    <div class="info">
+      <div>已工作时间：<span id="elapsed">00:00:00</span></div>
+      <div>每秒收入：<span id="persec">--</span></div>
+    </div>
+    
+    <div class="progress-bar">
+      <div class="progress" id="progress"></div>
+    </div>
+  </div>
+
+  <script>
+    const rateInput = document.getElementById('rate');
+    const hoursInput = document.getElementById('hours');
+    const targetInput = document.getElementById('target');
+    const toggleBtn = document.getElementById('toggle');
+    const earningsDisplay = document.getElementById('earnings');
+    const elapsedDisplay = document.getElementById('elapsed');
+    const persecDisplay = document.getElementById('persec');
+    const progressBar = document.getElementById('progress');
+    
+    let timer = null;
+    let startTime = null;
+    let targetAmount = 0;
+    let perSecond = 0;
+    
+    // 声音效果
+    const goalSound = new Audio('https://www.soundjay.com/button/beep-07.wav');
+    
+    toggleBtn.addEventListener('click', () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+        toggleBtn.textContent = '开始计时';
+      } else {
+        startTime = Date.now();
+        targetAmount = parseFloat(targetInput.value);
+        const rate = parseFloat(rateInput.value);
+        const hours = parseFloat(hoursInput.value);
+        const totalSeconds = hours * 3600;
+        perSecond = rate / 3600;
+        persecDisplay.textContent = perSecond.toFixed(2);
+        
+        timer = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          const earnings = elapsed * perSecond;
+          earningsDisplay.textContent = `¥${earnings.toFixed(2)}`;
+          
+          const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+          const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+          const s = String(elapsed % 60).padStart(2, '0');
+          elapsedDisplay.textContent = `${h}:${m}:${s}`;
+          
+          // 更新进度条
+          const progress = Math.min(earnings / targetAmount, 1) * 100;
+          progressBar.style.width = progress + '%';
+          
+          // 当达到目标时播放声音
+          if (earnings >= targetAmount && !goalSound.playing) {
+            goalSound.play();
+            toggleBtn.textContent = '目标已达成！';
+            clearInterval(timer);
+          }
+        }, 1000);
+        
+        toggleBtn.textContent = '停止计时';
+      }
+    });
+
+    // 添加金泡泡背景
+    for (let i = 0; i < 50; i++) {
+      const b = document.createElement('div');
+      b.classList.add('bubble');
+      b.style.width = b.style.height = Math.random() * 20 + 10 + 'px';
+      b.style.left = Math.random() * 100 + '%';
+      b.style.top = Math.random() * 100 + '%';
+      b.style.animationDuration = (Math.random() * 10 + 5) + 's';
+      document.body.appendChild(b);
+    }
+  </script>
+</body>
+</html>
